@@ -24,6 +24,35 @@ components:
           type: string
         data:
           type: object
+    Client:
+      type: object
+      properties:
+        clientId:
+          type: string
+        email:
+          type: string
+        
+    ClientCreationInput:
+        type: object
+        properties:
+          email:
+            type: string
+          password:
+            type: string
+    Therapist:
+      type: object
+      properties:
+        therapistId:
+          type: string
+        email:
+          type: string
+    TherapistCreationInput:
+        type: object
+        properties:
+          email:
+            type: string
+          password:
+            type: string
     Appointment:
       type: object
       properties:
@@ -42,11 +71,124 @@ components:
             - PENDING
             - CONFIRMED
             - CANCELLED
-
+    AppointmentCreationInput:
+        type: object
+        properties:
+            therapistId:
+                type: string
+            clientId:
+                type: string
+            appointmentTime:
+                type: string
+    Session:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        therapistId:
+          type: string
+        clientId:
+          type: string
+        sessionTime:
+          type: string
+          format: date-time
+        privateNotes:
+          type: string
+        sharedNotes:
+          type: string
+    SessionCreationInput:
+        type: object
+        properties:
+            clientId:
+                type: string
+            sessionTime:
+              type: string
+              format: date-time
+            privateNotes:
+              type: string
+            sharedNotes:
+              type: string
+    Message:
+      type: object
+      properties:
+        messageId:
+          type: string
+        senderId:
+          type: string
+        receiverId:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    MessageCreationInput:
+        type: object
+        properties:
+            senderId:
+              type: string
+            receiverId:
+              type: string
+            message:
+              type: string
+    Emotion:
+      type: object
+      properties:
+          emotionId:
+              type: string
+          clientId:
+              type: string
+          timeOfEmotion:
+              type: string
+              format: date-time
+          feeling:
+              type: string
+          intensity:
+              type: string
+              enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+    EmotionCreationInput:
+        type: object
+        properties:
+            timeOfEmotion:
+              type: string
+              format: date-time
+            feeling:
+              type: string
+            intensity:
+              type: string
+              enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+    JournalAccess:
+      type: object
+      properties:
+          journalAccessId:
+            type: string
+          clientId:
+            type: string
+          therapistId:
+              type: string
+          state:
+              type: string
+              enum:
+                - REQUESTED
+                - APPROVED
+                - REJECTED
+    JournalAccessCreationInput:
+      type: object
+      properties:
+        clientId:
+          type: string
+        therapistId:
+            type: string
 paths:
   /auth/register:
     post:
-      summary: Register a new user (client or therapist)
+      summary: "[Public] Register a new user (client or therapist)"
       requestBody:
         required: true
         content:
@@ -75,7 +217,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StandardResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/Client'
+                  - $ref: '#/components/schemas/Therapist'
         '400':
           description: Bad request
           content:
@@ -84,7 +228,7 @@ paths:
                 $ref: '#/components/schemas/StandardResponse'
   /auth/login:
     post:
-      summary: Login a user (client or therapist)
+      summary: "[Public] Login a user (client or therapist)"
       requestBody:
         required: true
         content:
@@ -113,413 +257,39 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StandardResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/Client'
+                  - $ref: '#/components/schemas/Therapist'
         '401':
           description: Invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
-  
-  /relationships:
-    get:
-      summary: Get the list of therapists or clients based on user type
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: clientId
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: therapistId
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: userType
-          required: true
-          schema:
-            type: string
-            enum:
-              - CLIENT
-              - THERAPIST
-      responses:
-        '200':
-          description: Successfully retrieved list of mapped therapists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Client or Therapist not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+  /therapists/{therapistId}/appointments:
     post:
-      summary: Map a therapist to a client
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                clientId:
-                  type: string
-                therapistId:
-                  type: string
-              required:
-                - clientId
-                - therapistId
-      responses:
-        '201':
-          description: Therapist mapped to client successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-    delete:
-      summary: Remove a relationship between therapist and client
+      summary: "[Therapist] Request for an appointment in an available slot for a therapist"
       security:
         - bearerAuth: []
       parameters:
-        - in: query
-          name: clientId
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: therapistId
-          required: true
-          schema:
-            type: string
-      responses:
-        '204': 
-          description: Therapist mapping removed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404': 
-          description: Client or Therapist mapping not found
-          content: 
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-  /relationships/journalAccess:
-    delete:
-      summary: Remove a therapist's access to the journal, but not mapping to account
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: clientId
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: therapistId
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Therapist's journal access removed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Client or Therapist mapping not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-    post:
-      summary: Request a new client for journal access
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                clientId:
-                  type: string
-                therapistId:
-                  type: string
-              required:
-                - clientId
-                - therapistId
-      responses:
-        '201':
-          description: Successfully requested journal access
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Client or Therapist not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-  /relationships/journalAccessRequests:
-    get:
-      summary: Get the list of journal access requests
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: clientId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200': 
-          description: Successfully retreived the list of journal access request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404': 
-          description: Client not found
-          content: 
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-    put:
-      summary: Approve or Reject journal access request
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: clientId
-          required: true
-          schema:
-            type: string
-        - in: query
+        - in: path
           name: therapistId
           required: true
           schema:
             type: string
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - ACCEPTED
-                    - REJECTED
-              required:
-                - status
-      responses:
-        '200':
-          description: Journal access request updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Client or therapist or journal access request not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'    
-  /messages:
-    post:
-      summary: Send a message to a therapist or client
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                senderId:
-                  type: string, 
-                receiverId:
-                  type: string, 
-                message:
-                  type: string
-              required:
-                - senderId
-                - receiverId
-                - message
-      responses:
-        '201':
-          description: Message sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404': 
-          description: Client or therapist not found
-          content: 
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-    get:
-      summary: Get the history of messages 
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: senderId
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: receiverId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successfully retrieved message history
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Client or Therapist not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-  /emotion-journal:
-    post:
-      summary: Add a new emotion record
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                clientId:
-                  type: string
-                timeOfEmotion:
-                  type: string
-                  format: date-time
-                feeling:
-                  type: string
-                intensity:
-                  type: string
-                  enum:
-                    - LOW
-                    - MEDIUM
-                    - HIGH
-              required:
-                - clientId
-                - timeOfEmotion
-                - feeling
-                - intensity
-      responses:
-        '201':
-          description: Emotion record added successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404': 
-          description: Client not found
-          content: 
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-    get:
-      summary: Retrieve Emotion records for the client
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: clientId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successfully retrieved list of emotion records
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404': 
-          description: Client not found
-          content: 
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-  /appointments:
-    post:
-      summary: Request for an appointment in an available slot
-      security:
-        - bearerAuth: []
-      requestBody:
           required: true
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  therapistId:
-                    type: string
-                  clientId:
-                    type: string
-                  appointmentTime:
-                    type: string
-                    format: date-time
-              required:
-                - therapistId
-                - clientId
-                - appointmentTime
+                  $ref: '#/components/schemas/AppointmentCreationInput'
       responses:
           '201':
             description: Successfully requested appointment
             content:
               application/json:
                 schema:
-                   $ref: '#/components/schemas/StandardResponse'
+                   $ref: '#/components/schemas/Appointment'
           '400':
             description: Bad Request
             content:
@@ -533,31 +303,38 @@ paths:
                 schema:
                    $ref: '#/components/schemas/StandardResponse'
     get:
-      summary: Get the list of appointments requested by a client
+      summary: "[Therapist] Get the list of appointments for a therapist, can filter by client"
       security:
-          - bearerAuth: []
+        - bearerAuth: []
       parameters:
-        - in: query
-          name: clientId
+        - in: path
+          name: therapistId
           required: true
           schema:
             type: string
+        - in: query
+          name: clientId
+          required: false
+          schema:
+              type: string
       responses:
         '200':
-          description: Successfully retreived the list of appointments for the client
+          description: Successfully retreived the list of appointments for the therapist
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StandardResponse'
+                type: array
+                items:
+                    $ref: '#/components/schemas/Appointment'
         '404':
-            description: Client not found
+            description: Therapist not found
             content:
               application/json:
                 schema:
                   $ref: '#/components/schemas/StandardResponse'
   /appointments/{appointmentId}:
     put:
-      summary: Update an appointment status
+      summary: "[Therapist/Client] Update an appointment status"
       security:
         - bearerAuth: []
       parameters:
@@ -587,7 +364,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StandardResponse'
+                $ref: '#/components/schemas/Appointment'
         '400':
             description: Bad Request
             content:
@@ -600,33 +377,117 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/StandardResponse'
-  /therapists/{therapistId}/appointments:
+  /clients/{clientId}/appointments:
     get:
-      summary: Get the list of appointment requests for a therapist
+      summary: "[Client] Get the list of appointments requested by a client"
       security:
-        - bearerAuth: []
+          - bearerAuth: []
       parameters:
         - in: path
-          name: therapistId
+          name: clientId
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Successfully retreived the list of appointments for the therapist
+          description: Successfully retreived the list of appointments for the client
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StandardResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
         '404':
-            description: Therapist not found
+            description: Client not found
             content:
               application/json:
                 schema:
                   $ref: '#/components/schemas/StandardResponse'
+  /appointments/{appointmentId}/session:
+      post:
+          summary: "[Therapist] Create a new session with an existing appointment"
+          security:
+              - bearerAuth: []
+          parameters:
+              - in: path
+                name: appointmentId
+                required: true
+                schema:
+                  type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SessionCreationInput'
+          responses:
+            '201':
+              description: Successfully created a new session
+              content:
+                  application/json:
+                      schema:
+                          $ref: '#/components/schemas/Session'
+            '400':
+                description: Bad request
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StandardResponse'
+      get:
+          summary: "[Therapist/Client] Get a session with an existing appointment"
+          security:
+            - bearerAuth: []
+          parameters:
+            - in: path
+              name: appointmentId
+              required: true
+              schema:
+                type: string
+          responses:
+              '200':
+                description: Successfully fetched the session
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Session'
+              '404':
+                  description: Session not found
+                  content:
+                      application/json:
+                          schema:
+                              $ref: '#/components/schemas/StandardResponse'
+      put:
+          summary: "[Therapist] Modify details of a session"
+          security:
+            - bearerAuth: []
+          parameters:
+              - in: path
+                name: appointmentId
+                required: true
+                schema:
+                  type: string
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                    $ref: '#/components/schemas/SessionCreationInput'
+          responses:
+            '200':
+              description: Successfully updated the session details
+              content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/Session'
+            '400':
+              description: Bad request
+              content:
+                  application/json:
+                      schema:
+                        $ref: '#/components/schemas/StandardResponse'
   /therapists:
     get:
-      summary: Search and select for a list of therapist
+      summary: "[Client] Search and select for a list of therapist"
       security:
         - bearerAuth: []
       parameters:
@@ -640,17 +501,352 @@ paths:
             description: Successfully retrieved search results
             content:
               application/json:
-                  schema:
-                     $ref: '#/components/schemas/StandardResponse'
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Therapist'
           '400':
             description: Bad request
             content:
               application/json:
                 schema:
                   $ref: '#/components/schemas/StandardResponse'
+  /clients/{clientId}/emotion-journal:
+    post:
+      summary: "[Client] Add a new emotion record"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema:
+              type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmotionCreationInput'
+      responses:
+        '201':
+          description: Emotion record added successfully
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/Emotion'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+    get:
+      summary: "[Client] Retrieve Emotion records for the client"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved list of emotion records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                    $ref: '#/components/schemas/Emotion'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+  /messages:
+    post:
+      summary: "[Therapist/Client] Send a message to a therapist or client"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/MessageCreationInput'
+      responses:
+        '201':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Message'
+        '404':
+          description: Client or therapist not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+    get:
+      summary: "[Therapist/Client] Get the history of messages"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: senderId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: receiverId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved message history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                    $ref: '#/components/schemas/Message'
+        '404':
+          description: Client or Therapist not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+  /relationships:
+    get:
+      summary: "[Therapist/Client] Get the list of therapists or clients based on user type"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: clientId
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: therapistId
+          required: false
+          schema:
+              type: string
+        - in: query
+          name: userType
+          required: true
+          schema:
+             type: string
+             enum:
+              - CLIENT
+              - THERAPIST
+      responses:
+        '200':
+          description: Successfully retrieved list of mapped therapists or clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                    oneOf:
+                      - $ref: '#/components/schemas/Client'
+                      - $ref: '#/components/schemas/Therapist'
+        '404':
+          description: Client or Therapist not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+    post:
+      summary: "[Therapist/Client] Map a therapist to a client"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/JournalAccessCreationInput'
+      responses:
+        '201':
+          description: Therapist mapped to client successfully
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/JournalAccess'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+    delete:
+      summary: "[Therapist/Client] Remove a relationship between therapist and client"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: clientId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: therapistId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Therapist mapping removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Client or Therapist mapping not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+  /relationships/journalAccess:
+    get:
+      summary: "[Therapist/Client] Get a list of Journal Access based on client or therapist"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: clientId
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: therapistId
+          required: false
+          schema:
+              type: string
+      responses:
+        '200':
+          description: Successfully retrieved journal access requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                    $ref: '#/components/schemas/JournalAccess'
+        '404':
+          description: Client or Therapist mapping not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+    put:
+      summary: "[Therapist/Client] Update a journal access request"
+      security:
+        - bearerAuth: []
+      parameters:
+          - in: query
+            name: journalAccessId
+            required: true
+            schema:
+              type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  state:
+                      type: string
+                      enum:
+                        - REQUESTED
+                        - APPROVED
+                        - REJECTED
+              required:
+                - state
+      responses:
+          '200':
+              description: Successfully updated the journal access request
+              content:
+                  application/json:
+                      schema:
+                          $ref: '#/components/schemas/JournalAccess'
+          '404':
+              description: Journal Access Request not found
+              content:
+                  application/json:
+                      schema:
+                        $ref: '#/components/schemas/StandardResponse'
+    delete:
+      summary: "[Client] Remove a therapist's access to the journal, but not mapping to account"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: clientId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: therapistId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Therapist's journal access removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Client or Therapist mapping not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+    post:
+      summary: "[Therapist] Request a new client for journal access"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/JournalAccessCreationInput'
+      responses:
+        '201':
+          description: Successfully requested journal access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalAccess'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Client or Therapist not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
   /search:
     get:
-      summary: search for notes and emotions journals
+      summary: "[Therapist/Client] Search for notes and emotions journals"
       security:
         - bearerAuth: []
       parameters:
@@ -659,16 +855,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: query
-          name: userType
-          required: true
-          schema:
-            type: string
-            enum:
-              - CLIENT
-              - THERAPIST
       responses:
-        '200': 
+        '200':
           description: Successfully retrieved search results
           content:
             application/json:
@@ -679,153 +867,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StandardResponse'       
-  /therapists/{therapistId}/sessions:
-    post:
-      summary: Create a new therapy session
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: therapistId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                clientId:
-                  type: string
-                sessionTime:
-                  type: string
-                  format: date-time
-                privateNotes:
-                  type: string
-                sharedNotes:
-                  type: string
-              required:
-                - clientId
-                - sessionTime
-      responses:
-          '201':
-            description: Session created successfully
-            content:
-              application/json:
-                schema:
-                   $ref: '#/components/schemas/StandardResponse'
-          '400':
-            description: Bad Request
-            content:
-              application/json:
-                schema:
-                   $ref: '#/components/schemas/StandardResponse'
-          '404':
-            description: Client or Therapist not found
-            content:
-              application/json:
-                schema:
-                   $ref: '#/components/schemas/StandardResponse'
-    get:
-      summary: Retrieve sessions created by the therapist
-      security:
-        - bearerAuth: []
-      parameters:
-          - in: path
-            name: therapistId
-            required: true
-            schema:
-              type: string
-      responses:
-        '200':
-          description: Successfully retrieved sessions
-          content:
-            application/json:
-              schema:
-                 $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Therapist not found
-          content:
-            application/json:
-              schema:
-                 $ref: '#/components/schemas/StandardResponse'
-  /therapists/{therapistId}/sessions/{sessionId}:
-    put:
-      summary: Modify details of a session
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: therapistId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: sessionId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                sessionTime:
-                  type: string
-                  format: date-time
-                privateNotes:
-                  type: string
-                sharedNotes:
-                  type: string
-      responses:
-        '200':
-          description: Session details updated successfully
-          content:
-            application/json:
-              schema:
-                 $ref: '#/components/schemas/StandardResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                 $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Therapist or Session not found
-          content:
-            application/json:
-              schema:
-                 $ref: '#/components/schemas/StandardResponse'
-    get:
-      summary: Retrieve a session details
-      security:
-        - bearerAuth: []
-      parameters:
-          - in: path
-            name: therapistId
-            required: true
-            schema:
-              type: string
-          - in: path
-            name: sessionId
-            required: true
-            schema:
-              type: string
-      responses:
-        '200':
-          description: Successfully retrieved session
-          content:
-            application/json:
-                schema:
-                   $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Therapist or Session not found
-          content:
-            application/json:
-              schema:
-                 $ref: '#/components/schemas/StandardResponse'
+                $ref: '#/components/schemas/StandardResponse'
