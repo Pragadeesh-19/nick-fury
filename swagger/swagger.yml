@@ -628,7 +628,7 @@ paths:
                 $ref: '#/components/schemas/StandardResponse'
   /relationships:
     get:
-      summary: "[Therapist/Client] Get the list of therapists or clients based on user type"
+      summary: "[secured] Get the list of therapists or clients based on user type"
       security:
         - bearerAuth: []
       parameters:
@@ -642,14 +642,6 @@ paths:
           required: false
           schema:
               type: string
-        - in: query
-          name: userType
-          required: true
-          schema:
-             type: string
-             enum:
-              - CLIENT
-              - THERAPIST
       responses:
         '200':
           description: Successfully retrieved list of mapped therapists or clients
