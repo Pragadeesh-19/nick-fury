@@ -602,12 +602,7 @@ paths:
         - bearerAuth: []
       parameters:
         - in: query
-          name: senderId
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: receiverId
+          name: userId
           required: true
           schema:
             type: string
