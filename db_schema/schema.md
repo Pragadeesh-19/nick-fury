@@ -21,7 +21,7 @@
 **Table Name:** `Sessions`  
 **Primary Key:**  
 - Partition Key: `therapistId`  
-- Sort Key: `sessionId`  
+- Sort Key: `startTime#sessionId`  
 **Attributes:**
 - `therapistId` (string) - Therapist owner of session
 - `sessionId` (string) - unique sessionId. 
@@ -35,7 +35,8 @@
 
 ### 3. Appointments Table
 **Table Name:** `Appointments`  
-**Primary Key:** `appointmentId` (Partition Key)  
+**Primary Key:** 
+- partition Key: `appointmentId`
 **Attributes:**
 - `appointmentId` (string) - unique Id
 - `sessionId` (string) - Linked sessionId. 
@@ -49,7 +50,14 @@
 
 ### 4. Mappings Table
 **Table Name:** `Mappings`  
-**Primary Key:** `mappingId` (Partition Key)  
+## Record for Client Queries
+**Primary Key:**
+- partition key: ownerId = clientId
+- Sort key: therapistId#mappingId
+## Record for Therapist Queries
+**Primary Key:**
+- partition key: ownerId = therapistId
+- Sort Key: ClientId#mappingId
 **Attributes:**
 - `mappingId` (string) - Unique mappingId.
 - `clientId` (string) - Client Id. 
@@ -78,7 +86,9 @@
 
 ### 6. Messages Table
 **Table Name:** `Messages`  
-**Primary Key:** `messageId` (Partition Key) 
+**Primary Key:** 
+- partition key: `conversationId` (computed by taking senderId and receiverId) 
+- sort Key: `timestamp#messageId`
 **Attributes:**
 - `messageId` (string) - unique messageId. 
 - `senderId` (string) - userId of sender. 
