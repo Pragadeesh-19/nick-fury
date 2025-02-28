@@ -50,15 +50,15 @@
 
 ### 4. Mappings Table
 **Table Name:** `Mappings`  
-## Record for Client Queries
 **Primary Key:**
-- partition key: ownerId = clientId
-- Sort key: therapistId#mappingId
-## Record for Therapist Queries
-**Primary Key:**
-- partition key: ownerId = therapistId
-- Sort Key: ClientId#mappingId
+- partition key: `ownerId` (client or therapist)
+- sort key: `relationId#mappingId`(relationId is therapistId or clientId depending on owner)
+**Global Secondary Index:** `SenderReceiverGSI`
+- partition key: `senderId` (client or therapist)
+- sort key: `receiverId#mappingId` (receiverId is therapistId or clientId depending on sender)
 **Attributes:**
+- `ownerId` (string) - Either clientId or therapistId depending on who's quering
+- `relationId` (string) - The other party's Id (therapistId if owner is client, clientId if owner is therapist)
 - `mappingId` (string) - Unique mappingId.
 - `clientId` (string) - Client Id. 
 - `therapistId` (string) - therapist Id. 
@@ -89,7 +89,11 @@
 **Primary Key:** 
 - partition key: `conversationId` (computed by taking senderId and receiverId) 
 - sort Key: `timestamp#messageId`
+**Global secondary index (GSI):** `SenderMessageGSI`
+- Partition Key: `senderId`
+- sort key - `timestamp#messageId`
 **Attributes:**
+- `conversationId` (string) - Conversation Identifier
 - `messageId` (string) - unique messageId. 
 - `senderId` (string) - userId of sender. 
 - `receiverId` (string) - userId of receiver.
