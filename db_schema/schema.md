@@ -51,14 +51,14 @@
 ### 4. Mappings Table
 **Table Name:** `Mappings`  
 **Primary Key:**
-- partition key: `ownerId` (client or therapist)
-- sort key: `relationId#mappingId`(relationId is therapistId or clientId depending on owner)
-**Global Secondary Index:** `SenderReceiverGSI`
-- partition key: `senderId` (client or therapist)
-- sort key: `receiverId#mappingId` (receiverId is therapistId or clientId depending on sender)
+- partition key: `mappingId`
+**Global Secondary Index1:** `clientMappingGSI`
+- partition key: `clientId`
+- sort key: `therapistId` 
+**Global Secondary Index2:** `TherapistMappingGSI`
+- partition key: `therapistId`
+- sort key: `clientId`
 **Attributes:**
-- `ownerId` (string) - Either clientId or therapistId depending on who's quering
-- `relationId` (string) - The other party's Id (therapistId if owner is client, clientId if owner is therapist)
 - `mappingId` (string) - Unique mappingId.
 - `clientId` (string) - Client Id. 
 - `therapistId` (string) - therapist Id. 
